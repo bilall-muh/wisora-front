@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react"; // 1. Added useCallback
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -18,7 +18,8 @@ export const FileList: React.FC<FileListProps> = ({ collection, onFileDeleted })
   const [isLoading, setIsLoading] = useState(true);
   const { refreshCollections } = useCollections();
 
-  const fetchFiles = async () => {
+  // 2. Wrapped fetchFiles in useCallback to make it stable
+  const fetchFiles = useCallback(async () => {
     try {
       const data = await api.getFiles(collection.slug);
       setFiles(data.results);
@@ -31,7 +32,7 @@ export const FileList: React.FC<FileListProps> = ({ collection, onFileDeleted })
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [collection.slug]); 
 
   useEffect(() => {
     let pollingInterval: NodeJS.Timeout;
@@ -59,7 +60,7 @@ export const FileList: React.FC<FileListProps> = ({ collection, onFileDeleted })
         clearInterval(pollingInterval);
       }
     };
-  }, [collection.slug]); // Re-run when collection slug changes
+  }, [collection.slug, fetchFiles]); // 3. Added fetchFiles to the dependency array
 
   const handleDelete = async (fileId: string) => {
     try {
